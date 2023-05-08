@@ -8,6 +8,9 @@
         <field name="model">albaran.count</field>
         <field name="arch" type="xml">  
             <form string="Grade">
+                <header>
+                    <button name="action_update1" string="Ajuste de inventario" type="object"  class="oe_highlight"/>
+                </header>
                 
                 <sheet>
                     <group colspan="4" col="4"> 
