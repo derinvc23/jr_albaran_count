@@ -15,23 +15,32 @@
                 <sheet>
                     <group colspan="4" col="4"> 
                         <field name="name"/>
-                        <field name="stock_id"/> 
+                        <field name="location_id"/> 
                         <field name="date"/>
                     </group>
-                   
+                    <h2>Ubicaciones si es una entrada</h2>
+                    <group colspan="4" col="4"> 
+                        <field name="location_id_u1"/>
+                        <field name="location_id_d1"/> 
+                    </group>
+                    <h2>Ubicaciones si es una Salida</h2>
+                    <group colspan="4" col="4"> 
+                        <field name="location_id_u"/>
+                        <field name="location_id_d"/> 
+                    </group>
 
                     <h2>Detalle</h2>
-                    <field name="stock_line_ids">
+                    <field name="stock_line_ids" >
                         <tree editable="bottom">
-                            <field name="product_id" />
+                            <field name="albaran_id" invisible="1"/>
+                            <field name="product_id"/>
                             <field name="codigo"/>
                             <field name="descrip"/>
                             <field name="qty"/>
                             <field name="dif_qty"/>
                             <field name="costo"/>
                             <field name="import_t"/>
-                            <field name="u_origen"/>
-                            <field name="dest_origen"/>
+                            
                         </tree>
                     </field>
                     
@@ -45,7 +54,7 @@
         <field name="arch" type="xml">  
             <tree string="Configuración">
                 <field name="name"/>
-                <field name="stock_id"/> 
+                <field name="location_id"/> 
                 <field name="date"/> 
             </tree>  
         </field>

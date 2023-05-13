@@ -6,17 +6,21 @@ class AlbaranCount(models.Model):
     _name="albaran.count"
 
     name=fields.Char(string="Nombre")
-    stock_id=fields.Many2one("stock.picking",string="Albaran")
+    location_id=fields.Many2one("stock.location",string="Ubicacion")
     date=fields.Datetime(string="Fecha",default=fields.Date.today())
     stock_line_ids=fields.One2many("stock.line1","albaran_id")
+    location_id_u=fields.Many2one("stock.location",string="Ubicacion origen",required=True)
+    location_id_d=fields.Many2one("stock.location",string="Ubicacion destino",required=True)
+    location_id_u1=fields.Many2one("stock.location",string="Ubicacion origen",required=True)
+    location_id_d1=fields.Many2one("stock.location",string="Ubicacion destino",required=True)
 
     def action_update1(self):
         for line in self.stock_line_ids:
             if not line.update_f and line.dif_qty>0:
-                line.create_product_exit(line.product_id,line.dif_qty,line.u_origen,line.dest_origen)
+                line.create_product_exit(line.product_id,line.dif_qty,self.location_id_u,self.location_id_d)
                 line.update_f=True
             elif not line.update_f and line.dif_qty<0:
-                line.create_product_entry(line.product_id,abs(line.dif_qty),line.u_origen,line.dest_origen)
+                line.create_product_entry(line.product_id,abs(line.dif_qty),self.location_id_u1,self.location_id_d1)
                 line.update_f=True
 
 
@@ -26,32 +30,39 @@ class AlbaranCount(models.Model):
 class StockLine(models.Model):
     _name="stock.line1"
 
-    product_id=fields.Many2one("product.product",string="Producto")
+    product_id=fields.Many2one("product.product",string="Producto", domain=lambda self: self.env['stock.move']._get_product_domain())
     albaran_id=fields.Many2one("albaran.count")
     codigo=fields.Char(related="product_id.default_code")
     descrip=fields.Char(related="product_id.name")
     qty=fields.Float(string="Cantidad ingresada")
     dif_qty=fields.Float(string="Diferencia",compute="get_qty")
     costo=fields.Float(related="product_id.lst_price")
-    u_origen=fields.Many2one("stock.location",compute="get_u_o")
-    dest_origen=fields.Many2one("stock.location",compute="get_u_d")
+    u_origen=fields.Many2one("stock.location")
+    dest_origen=fields.Many2one("stock.location")
     import_t=fields.Float("Importe Total",compute="get_total")
     update_f=fields.Boolean(default=False)
+    stock_move_ids = fields.One2many('stock.move', 'stcock_line1_id')
 
-    def get_u_o(self):
-        for line in self:
-            line.u_origen=line.albaran_id.stock_id.location_id.id
-    def get_u_d(self):
-        for line in self:
-            line.dest_origen=line.albaran_id.stock_id.location_dest_id.id
+    
+    @api.model
+    def _get_product_domain(self):
+        domain = []
+        context = self.env.context
+        if context.get('default_location_id'):
+            domain = [('quant_ids.location_id', '=', context.get('default_location_id'))]
+        return domain
+    
 
     def get_qty(self):
 
         for line in self:
             qty=[]
-            for record in line.albaran_id.stock_id.move_lines:
+            quants = self.env['stock.quant'].search([
+            ('location_id', '=', line.albaran_id.location_id.id)
+        ])
+            for record in quants:
                 if record.product_id.id==line.product_id.id:
-                    qty.append(record.product_uom_qty)
+                    qty.append(record.qty)
             if line.qty:
                 line.dif_qty=sum(qty)-line.qty
             else:
@@ -140,3 +151,15 @@ class StockLocation(models.Model):
         """
         warehouse = self.env['stock.warehouse'].search([('lot_stock_id', '=', self.id)], limit=1)
         return warehouse
+
+class StockMove(models.Model):
+    _inherit = 'stock.move'
+
+    stcock_line1_id=fields.Many2one("stock.line1")
+
+    @api.model
+    def _get_product_domain(self):
+        domain = []
+        if self.location_id:
+            domain = [('quant_ids.location_id', '=', self.location_id.id)]
+        return domain
