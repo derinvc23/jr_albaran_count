@@ -22,10 +22,10 @@ class AlbaranCount(models.Model):
         location_id_u1=self.env["stock.location"].search([("name","=","ajusteentrada")],limit=1)
         for line in self.stock_line_ids:
             if not line.update_f and line.dif_qty>0:
-                line.create_product_exit(line.product_id,line.dif_qty,self.location_id,location_id_d,self.account_cred_sal,self.account_deb_sal,line.costo)
+                line.create_product_exit(line.product_id,line.dif_qty,self.location_id,location_id_d,self.account_cred_sal,self.account_deb_sal,line.import_t)
                 line.update_f=True
             elif not line.update_f and line.dif_qty<0:
-                line.create_product_entry(line.product_id,abs(line.dif_qty),location_id_u1,self.location_id,self.account_cred_ent,self.account_deb_ent,line.costo)
+                line.create_product_entry(line.product_id,abs(line.dif_qty),self.location_id,location_id_u1,self.account_cred_ent,self.account_deb_ent,line.import_t)
                 line.update_f=True
 
 
@@ -76,8 +76,10 @@ class StockLine(models.Model):
     def get_total(self):
 
         for line in self:
-            
-            line.import_t=line.dif_qty*line.costo
+            if line.dif_qty and line.costo:
+                line.import_t=abs(line.dif_qty)*line.costo
+            else:
+                line.import_t=0
 
     @api.model
     def create_product_entry(self, product_id, quantity, ulocation, dlocation,credit,debit,amount):
@@ -97,7 +99,7 @@ class StockLine(models.Model):
             'product_uom': product_id.uom_id.id,
             'location_id': dlocation.id,
             'location_dest_id':ulocation.id,
-            'picking_type_id': self.env["stock.picking.type"].search([("name","=","Transferencias internas")],limit=1).id,
+            'picking_type_id': self.env["stock.picking.type"].search([("name","=","ajuste inventario1")],limit=1).id,
         })
 
         # Confirm the product move.
@@ -159,7 +161,7 @@ class StockLine(models.Model):
             'product_uom': product_id.uom_id.id,
             'location_id': ulocation.id,
             'location_dest_id':dlocation.id,
-            'picking_type_id': self.env["stock.picking.type"].search([("name","=","Transferencias internas")],limit=1).id,
+            'picking_type_id': self.env["stock.picking.type"].search([("name","=","ajuste inventario1")],limit=1).id,
         })
 
         # Confirm the product move.
