@@ -273,3 +273,16 @@ class StockMove(models.Model):
         if self.location_id:
             domain = [('quant_ids.location_id', '=', self.location_id.id)]
         return domain
+    
+class InventoryAdjustment(models.Model):
+    _inherit = 'stock.inventory'
+
+    def action_done(self):
+        # Establecer las cantidades en cero para todos los productos
+
+        if self.location_id.name=="ajustesalida" or self.location_id.name=="ajusteentrada":
+        # Evitar la generación del asiento contable
+            self.env.context = dict(self.env.context, no_create_account_move=True)
+
+        # Llamar al método action_done() de la superclase
+        return super(InventoryAdjustment, self).action_done()
