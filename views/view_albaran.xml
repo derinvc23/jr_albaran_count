@@ -1,99 +1,99 @@
 <?xml version="1.0" encoding="utf-8"?>
-<odoo>
+<openerp>
+    <data>
 
 
-
-    <record id="jr_albaran_countview_albaran_count_view_form1" model="ir.ui.view">
-        <field name="name">albaran.count1</field>
-        <field name="model">albaran.count</field>
-        <field name="arch" type="xml">  
-            <form string="Grade">
-                <header>
-                    <button name="action_update1" string="Ajuste de inventario" type="object"  class="oe_highlight"/>
-                </header>
-                
-                <sheet>
-                    <group colspan="4" col="4"> 
-                        <field name="name"/>
-                        <field name="location_id"/> 
-                        <field name="date"/>
-                    </group>
-                    <h2>Cuenta contables si es una entrada</h2>
-                    <group colspan="4" col="4"> 
-                        <field name="account_deb_ent"/>
-                        <field name="account_cred_ent"/> 
-                    </group>
-                    <h2>Cuentas contables si es una Salida</h2>
-                    <group colspan="4" col="4"> 
-                        <field name="account_deb_sal"/>
-                        <field name="account_cred_sal"/> 
-                    </group>
-
-                    <h2>Detalle</h2>
-                    <field name="stock_line_ids" >
-                        <tree editable="bottom">
-                            <field name="albaran_id" invisible="1"/>
-                            <field name="product_id"/>
-                            <field name="codigo"/>
-                            <field name="descrip"/>
-                            <field name="qty"/>
-                            <field name="dif_qty"/>
-                            <field name="costo"/>
-                            <field name="import_t"/>
-                            
-                        </tree>
-                    </field>
+        <record id="jr_albaran_countview_albaran_count_view_form1" model="ir.ui.view">
+            <field name="name">albaran.count1</field>
+            <field name="model">albaran.count</field>
+            <field name="arch" type="xml">  
+                <form string="Grade">
+                    <header>
+                        <button name="action_update1" string="Ajuste de inventario" type="object"  class="oe_highlight"/>
+                    </header>
                     
-                </sheet>
-            </form>  
-        </field>
-    </record>
-    <record id="jr_albaran_countview_albaran_count_view_tree2" model="ir.ui.view">
-        <field name="name">albaran.count.tree</field>
-        <field name="model">albaran.count</field>
-        <field name="arch" type="xml">  
-            <tree string="Configuración">
-                <field name="name"/>
-                <field name="location_id"/> 
-                <field name="date"/> 
-            </tree>  
-        </field>
-    </record>
-   
+                    <sheet>
+                        <group colspan="4" col="4"> 
+                            <field name="name"/>
+                            <field name="location_id"/> 
+                            <field name="date"/>
+                        </group>
+                        <h2>Cuenta contables si es una entrada</h2>
+                        <group colspan="4" col="4"> 
+                            <field name="account_deb_ent"/>
+                            <field name="account_cred_ent"/> 
+                        </group>
+                        <h2>Cuentas contables si es una Salida</h2>
+                        <group colspan="4" col="4"> 
+                            <field name="account_deb_sal"/>
+                            <field name="account_cred_sal"/> 
+                        </group>
 
-    <record id="jr_albaran_count.act_albaran_count_limit" model="ir.actions.act_window">
-        <field name="name">Reporte</field>
-        <field name="type">ir.actions.act_window</field>
-        <field name="res_model">albaran.count</field>
-        <field name="view_mode">tree,form</field>
+                        <h2>Detalle</h2>
+                        <field name="stock_line_ids" >
+                            <tree editable="bottom">
+                                <field name="albaran_id" invisible="1"/>
+                                <field name="product_id"/>
+                                <field name="codigo"/>
+                                <field name="descrip"/>
+                                <field name="qty"/>
+                                <field name="dif_qty"/>
+                                <field name="costo"/>
+                                <field name="import_t"/>
+                                
+                            </tree>
+                        </field>
+                        
+                    </sheet>
+                </form>  
+            </field>
+        </record>
+        <record id="jr_albaran_countview_albaran_count_view_tree2" model="ir.ui.view">
+            <field name="name">albaran.count.tree</field>
+            <field name="model">albaran.count</field>
+            <field name="arch" type="xml">  
+                <tree string="Configuración">
+                    <field name="name"/>
+                    <field name="location_id"/> 
+                    <field name="date"/> 
+                </tree>  
+            </field>
+        </record>
+    
+
+        <record id="jr_albaran_countact_albaran_count_limit" model="ir.actions.act_window">
+            <field name="name">Reporte</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">albaran.count</field>
+            <field name="view_mode">tree,form</field>
+            
+        </record>
+
+    
+
+        <record model="ir.actions.act_window.view" id="jr_albaran_countact_open_op_albaran_count_view_tree">
+            <field name="act_window_id" ref="jr_albaran_countact_albaran_count_limit"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="jr_albaran_countview_albaran_count_view_tree2"/>
+        </record>
+
+        <record model="ir.actions.act_window.view" id="jr_albaran_countact_open_op_albaran_count_view_form">
+            <field name="act_window_id" ref="jr_albaran_countact_albaran_count_limit"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="jr_albaran_countview_albaran_count_view_form1"/>
+        </record>
+    
         
-    </record>
 
- 
-
-    <record model="ir.actions.act_window.view" id="jr_albaran_countact_open_op_albaran_count_view_tree">
-        <field name="act_window_id" ref="jr_albaran_count.act_albaran_count_limit"/>
-        <field name="view_mode">tree</field>
-        <field name="view_id" ref="jr_albaran_countview_albaran_count_view_tree2"/>
-    </record>
-
-    <record model="ir.actions.act_window.view" id="jr_albaran_countact_open_op_albaran_count_view_form">
-        <field name="act_window_id" ref="jr_albaran_count.act_albaran_count_limit"/>
-        <field name="view_mode">form</field>
-        <field name="view_id" ref="jr_albaran_countview_albaran_count_view_form1"/>
-    </record>
-   
-    
-
-    
-
-    <menuitem id="menu_count_stock"
-                name="Reporte de perdidas" sequence="100"
-                action="jr_albaran_count.act_albaran_count_limit"
-                parent="stock.menu_stock_inventory_control"/>
-                
         
 
-    
-</odoo>
+        <menuitem id="menu_count_stock"
+                    name="Reporte de perdidas" sequence="100"
+                    action="jr_albaran_countact_albaran_count_limit"
+                    parent="stock.menu_stock_inventory_control"/>
+                    
+        
+
+    </data>    
+</openerp>
     

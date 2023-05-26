@@ -18,11 +18,13 @@
     # always loaded
     'data': [
         # 'security/ir.model.access.csv',
-        'views/view_albaran.xml',
+        
        
         
         
         'security/ir.model.access.csv',
+
+        'views/view_albaran.xml',
     
     ],
     # only loaded in demonstration mode

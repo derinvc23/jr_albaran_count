@@ -1,4 +1,5 @@
-from odoo import models, api, fields, exceptions, _
+# -*- coding: utf-8 -*-
+from openerp import models, fields, api, _
 from datetime import date, datetime, time
 
 
@@ -17,6 +18,49 @@ class AlbaranCount(models.Model):
     account_deb_ent=fields.Many2one("account.account",string="Cuenta debito")
     account_cred_ent=fields.Many2one("account.account",string="Cuenta credito")
 
+    @api.model
+    def create_inventory_adjustment(self):
+        inventory_obj = self.env['stock.inventory']
+        
+        # Crear el ajuste de inventario
+        inventory1 = inventory_obj.create({
+            'name': 'ajuste de salida',
+            'location_id': self.env["stock.location"].search([("name","=","ajustesalida")],limit=1).id,
+            'filter': 'none',
+            'all_products': True,  # Ajustar todos los productos de la ubicación
+            'with_move': False,  # No generar asientos contables
+        })
+
+        # Establecer las cantidades en cero para todos los productos
+        inventory1.prepare_inventory()
+        for line in inventory1.line_ids:
+            line.product_qty = 0.0
+        
+
+        # Validar el ajuste de inventario
+        inventory1.action_done()
+
+    
+        
+        # Crear el ajuste de inventario
+        inventory = inventory_obj.create({
+            'name': 'ajuste de entrada',
+            'location_id': self.env["stock.location"].search([("name","=","ajusteentrada")],limit=1).id,
+            'filter': 'none',
+            'all_products': True,  # Ajustar todos los productos de la ubicación
+            'with_move': False,  # No generar asientos contables
+        })
+
+        # Establecer las cantidades en cero para todos los productos
+        inventory.prepare_inventory()
+        for line in inventory.line_ids:
+            line.product_qty = 0.0
+
+        # Validar el ajuste de inventario
+        inventory.action_done()
+
+        return True
+
     def action_update1(self):
         location_id_d=self.env["stock.location"].search([("name","=","ajustesalida")],limit=1)
         location_id_u1=self.env["stock.location"].search([("name","=","ajusteentrada")],limit=1)
@@ -27,6 +71,7 @@ class AlbaranCount(models.Model):
             elif not line.update_f and line.dif_qty<0:
                 line.create_product_entry(line.product_id,abs(line.dif_qty),self.location_id,location_id_u1,self.account_cred_ent,self.account_deb_ent,line.import_t)
                 line.update_f=True
+        self.create_inventory_adjustment()
 
 
 
