@@ -83,7 +83,7 @@ class AlbaranCount(models.Model):
 class StockLine(models.Model):
     _name="stock.line1"
 
-    product_id=fields.Many2one("product.product",string="Producto", domain=lambda self: self.env['stock.move']._get_product_domain())
+    product_id=fields.Many2one("product.product",string="Producto")
     albaran_id=fields.Many2one("albaran.count")
     codigo=fields.Char(related="product_id.default_code")
     descrip=fields.Char(related="product_id.name")
