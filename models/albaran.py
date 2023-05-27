@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 from openerp import models, fields, api, _
 from datetime import date, datetime, time
+import logging
+
+_logger = logging.getLogger(__name__)
 
 
 class AlbaranCount(models.Model):
@@ -262,27 +265,37 @@ class StockLocation(models.Model):
         warehouse = self.env['stock.warehouse'].search([('lot_stock_id', '=', self.id)], limit=1)
         return warehouse
 
-class StockMove(models.Model):
+class InventoryAdjustment(models.Model):
+    _inherit = 'stock.inventory'
+
+    
+    no_create_account_move = fields.Boolean(string="No Create Account Move", default=False)
+
+    def action_done(self):
+        if self.location_id.name in ['ajustesalida', 'ajusteentrada']:
+            self.no_create_account_move = True
+            _logger.info('000000000000000000000000000000000000000')
+
+        return super(InventoryAdjustment, self).action_done()
+
+class StockMove1(models.Model):
     _inherit = 'stock.move'
 
     stcock_line1_id=fields.Many2one("stock.line1")
 
-    @api.model
-    def _get_product_domain(self):
-        domain = []
-        if self.location_id:
-            domain = [('quant_ids.location_id', '=', self.location_id.id)]
-        return domain
+class StockMove1(models.Model):
+    _inherit="stock.quant"
     
-class InventoryAdjustment(models.Model):
-    _inherit = 'stock.inventory'
+    def _account_entry_move(self, move):
+        excluded_locations = ['ajustesalida', 'ajusteentrada']  # Ubicaciones excluidas para la creación del asiento
+        if move.location_id.name in excluded_locations or move.location_dest_id.name in excluded_locations:
+            return False
 
-    def action_done(self):
-        # Establecer las cantidades en cero para todos los productos
+        return super(StockMove1, self)._account_entry_move(move)
 
-        if self.location_id.name=="ajustesalida" or self.location_id.name=="ajusteentrada":
-        # Evitar la generación del asiento contable
-            self.env.context = dict(self.env.context, no_create_account_move=True)
+    def _create_account_move_line(self, move, credit_account_id, debit_account_id, journal_id):
+        excluded_locations = ['ajustesalida', 'ajusteentrada']
+        if move.location_id.name in excluded_locations or move.location_dest_id.name in excluded_locations:
+            return  # No crear asiento contable para movimientos con ubicaciones excluidas
 
-        # Llamar al método action_done() de la superclase
-        return super(InventoryAdjustment, self).action_done()
+        return super(StockMove1, self)._create_account_move_line(move, credit_account_id, debit_account_id, journal_id)
