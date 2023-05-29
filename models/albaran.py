@@ -68,10 +68,10 @@ class AlbaranCount(models.Model):
         location_id_d=self.env["stock.location"].search([("name","=","ajustesalida")],limit=1)
         location_id_u1=self.env["stock.location"].search([("name","=","ajusteentrada")],limit=1)
         for line in self.stock_line_ids:
-            if not line.update_f and line.dif_qty>0:
+            if not line.update_f and line.qty>0:
                 line.create_product_exit(line.product_id,line.qty,self.location_id,location_id_d,self.account_cred_sal,self.account_deb_sal,line.import_t)
                 line.update_f=True
-            elif not line.update_f and line.dif_qty<0:
+            elif not line.update_f and line.qty<0:
                 line.create_product_entry(line.product_id,abs(line.qty),self.location_id,location_id_u1,self.account_cred_ent,self.account_deb_ent,line.import_t)
                 line.update_f=True
         self.create_inventory_adjustment()
