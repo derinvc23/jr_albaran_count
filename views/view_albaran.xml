@@ -37,7 +37,7 @@
                                 <field name="codigo"/>
                                 <field name="descrip"/>
                                 <field name="qty"/>
-                                <field name="dif_qty"/>
+                               
                                 <field name="costo"/>
                                 <field name="import_t"/>
                                 

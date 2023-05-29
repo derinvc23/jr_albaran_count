@@ -69,10 +69,10 @@ class AlbaranCount(models.Model):
         location_id_u1=self.env["stock.location"].search([("name","=","ajusteentrada")],limit=1)
         for line in self.stock_line_ids:
             if not line.update_f and line.dif_qty>0:
-                line.create_product_exit(line.product_id,line.dif_qty,self.location_id,location_id_d,self.account_cred_sal,self.account_deb_sal,line.import_t)
+                line.create_product_exit(line.product_id,line.qty,self.location_id,location_id_d,self.account_cred_sal,self.account_deb_sal,line.import_t)
                 line.update_f=True
             elif not line.update_f and line.dif_qty<0:
-                line.create_product_entry(line.product_id,abs(line.dif_qty),self.location_id,location_id_u1,self.account_cred_ent,self.account_deb_ent,line.import_t)
+                line.create_product_entry(line.product_id,abs(line.qty),self.location_id,location_id_u1,self.account_cred_ent,self.account_deb_ent,line.import_t)
                 line.update_f=True
         self.create_inventory_adjustment()
 
@@ -88,7 +88,7 @@ class StockLine(models.Model):
     codigo=fields.Char(related="product_id.default_code")
     descrip=fields.Char(related="product_id.name")
     qty=fields.Float(string="Cantidad ingresada")
-    dif_qty=fields.Float(string="Diferencia",compute="get_qty",store=True)
+    dif_qty=fields.Float(string="Diferencia", store=True)
     costo=fields.Float(related="product_id.lst_price")
     u_origen=fields.Many2one("stock.location")
     dest_origen=fields.Many2one("stock.location")
@@ -124,8 +124,8 @@ class StockLine(models.Model):
     def get_total(self):
 
         for line in self:
-            if line.dif_qty and line.costo:
-                line.import_t=abs(line.dif_qty)*line.costo
+            if line.qty and line.costo:
+                line.import_t=abs(line.qty)*line.costo
             else:
                 line.import_t=0
 
