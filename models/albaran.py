@@ -14,11 +14,18 @@ class AlbaranCount(models.Model):
     date=fields.Datetime(string="Fecha",default=fields.Date.today())
     stock_line_ids=fields.One2many("stock.line1","albaran_id")
    
-    
+    def get_account_deb(self):
+        for line in self:
+            line.account_deb_ent=self.env[("account.account")].search([("code","=","1.01.03.01-006"),("company_id.name","=","ALUMINIOS DE BOLIVIA")],limit=1).id
+
+    def get_account_cred(self):
+        for line in self:
+            line.account_cred_sal=self.env[("account.account")].search([("code","=","1.01.03.01-006"),("company_id.name","=","ALUMINIOS DE BOLIVIA")],limit=1).id
+
    
     account_deb_sal=fields.Many2one("account.account",string="Cuenta debito")
-    account_cred_sal=fields.Many2one("account.account",string="Cuenta credito")
-    account_deb_ent=fields.Many2one("account.account",string="Cuenta debito")
+    account_cred_sal=fields.Many2one("account.account",string="Cuenta credito" , default=get_account_cred)
+    account_deb_ent=fields.Many2one("account.account",string="Cuenta debito", default=get_account_deb)
     account_cred_ent=fields.Many2one("account.account",string="Cuenta credito")
 
     @api.model
@@ -68,10 +75,10 @@ class AlbaranCount(models.Model):
         location_id_d=self.env["stock.location"].search([("name","=","ajustesalida")],limit=1)
         location_id_u1=self.env["stock.location"].search([("name","=","ajusteentrada")],limit=1)
         for line in self.stock_line_ids:
-            if not line.update_f and line.qty>0:
-                line.create_product_exit(line.product_id,line.qty,self.location_id,location_id_d,self.account_cred_sal,self.account_deb_sal,line.import_t)
+            if not line.update_f and line.qty<0:
+                line.create_product_exit(line.product_id,abs(line.qty),self.location_id,location_id_d,self.account_cred_sal,self.account_deb_sal,line.import_t)
                 line.update_f=True
-            elif not line.update_f and line.qty<0:
+            elif not line.update_f and line.qty>0:
                 line.create_product_entry(line.product_id,abs(line.qty),self.location_id,location_id_u1,self.account_cred_ent,self.account_deb_ent,line.import_t)
                 line.update_f=True
         self.create_inventory_adjustment()
@@ -89,12 +96,19 @@ class StockLine(models.Model):
     descrip=fields.Char(related="product_id.name")
     qty=fields.Float(string="Cantidad ingresada")
     dif_qty=fields.Float(string="Diferencia", store=True)
-    costo=fields.Float(related="product_id.lst_price")
+    costo=fields.Float(compute="_get_costo",string="Costo")
     u_origen=fields.Many2one("stock.location")
     dest_origen=fields.Many2one("stock.location")
     import_t=fields.Float("Importe Total",compute="get_total")
     update_f=fields.Boolean(default=False)
     stock_move_ids = fields.One2many('stock.move', 'stcock_line1_id')
+
+    def _get_costo(self):
+        for line in self:
+            if line.product_id:
+                line.costo=line.product_id.standard_price
+            else:
+                line.costo=0
 
     
     @api.model
