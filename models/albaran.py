@@ -14,19 +14,20 @@ class AlbaranCount(models.Model):
     date=fields.Datetime(string="Fecha",default=fields.Date.today())
     stock_line_ids=fields.One2many("stock.line1","albaran_id")
    
-    def get_account_deb(self):
-        for line in self:
-            line.account_deb_ent=self.env[("account.account")].search([("code","=","1.01.03.01-006"),("company_id.name","=","ALUMINIOS DE BOLIVIA")],limit=1).id
-
-    def get_account_cred(self):
-        for line in self:
-            line.account_cred_sal=self.env[("account.account")].search([("code","=","1.01.03.01-006"),("company_id.name","=","ALUMINIOS DE BOLIVIA")],limit=1).id
-
+    
    
     account_deb_sal=fields.Many2one("account.account",string="Cuenta debito")
-    account_cred_sal=fields.Many2one("account.account",string="Cuenta credito" , default=get_account_cred)
-    account_deb_ent=fields.Many2one("account.account",string="Cuenta debito", default=get_account_deb)
+    account_cred_sal=fields.Many2one("account.account",string="Cuenta credito" , default=lambda self: self.get_account_cred())
+    account_deb_ent=fields.Many2one("account.account",string="Cuenta debito", default=lambda self: self.get_account_deb())
     account_cred_ent=fields.Many2one("account.account",string="Cuenta credito")
+
+    def get_account_deb(self):
+        account = self.env["account.account"].search([("code", "=", "1.01.03.01-006"),("company_id.name","=","ALUMINIOS DE BOLIVIA")], limit=1)
+        return account.id
+
+    def get_account_cred(self):
+        account = self.env["account.account"].search([("code", "=", "1.01.03.01-006"),("company_id.name","=","ALUMINIOS DE BOLIVIA")], limit=1)
+        return account.id
 
     @api.model
     def create_inventory_adjustment(self):
