@@ -14,7 +14,7 @@ class AlbaranCount(models.Model):
     date=fields.Datetime(string="Fecha",default=fields.Date.today())
     stock_line_ids=fields.One2many("stock.line1","albaran_id")
    
-    
+    state=fields.Selection([("a","Abierto"),("p","Procesado")],string="Estado",default="a")
    
     account_deb_sal=fields.Many2one("account.account",string="Cuenta debito")
     account_cred_sal=fields.Many2one("account.account",string="Cuenta credito" , default=lambda self: self.get_account_cred())
@@ -83,6 +83,7 @@ class AlbaranCount(models.Model):
                 line.create_product_entry(line.product_id,abs(line.qty),self.location_id,location_id_u1,self.account_cred_ent,self.account_deb_ent,line.import_t)
                 line.update_f=True
         self.create_inventory_adjustment()
+        self.state="p"
 
 
 

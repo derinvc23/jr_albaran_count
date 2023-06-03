@@ -10,27 +10,28 @@
                 <form string="Grade">
                     <header>
                         <button name="action_update1" string="Ajuste de inventario" type="object"  class="oe_highlight"/>
+                        <field name="state" widget="statusbar" statusbar_visible="a,p"/>
                     </header>
                     
                     <sheet>
-                        <group colspan="4" col="4"> 
-                            <field name="name"/>
-                            <field name="location_id"/> 
-                            <field name="date"/>
+                        <group colspan="4" col="4" attrs="{'readonly': [('state', '=','p')]}"> 
+                            <field name="name" attrs="{'readonly': [('state', '=','p')]}"/>
+                            <field name="location_id" attrs="{'readonly': [('state', '=','p')]}"/> 
+                            <field name="date" attrs="{'readonly': [('state', '=','p')]}"/>
                         </group>
                         <h2>Cuenta contables si es una entrada</h2>
-                        <group colspan="4" col="4"> 
-                            <field name="account_deb_ent"/>
-                            <field name="account_cred_ent"/> 
+                        <group colspan="4" col="4" attrs="{'readonly': [('state', '=','p')]}"> 
+                            <field name="account_deb_ent" attrs="{'readonly': [('state', '=','p')]}"/>
+                            <field name="account_cred_ent" attrs="{'readonly': [('state', '=','p')]}"/> 
                         </group>
                         <h2>Cuentas contables si es una Salida</h2>
-                        <group colspan="4" col="4"> 
-                            <field name="account_deb_sal"/>
-                            <field name="account_cred_sal"/> 
+                        <group colspan="4" col="4" > 
+                            <field name="account_deb_sal" attrs="{'readonly': [('state', '=','p')]}"/>
+                            <field name="account_cred_sal" attrs="{'readonly': [('state', '=','p')]}"/> 
                         </group>
 
                         <h2>Detalle</h2>
-                        <field name="stock_line_ids" >
+                        <field name="stock_line_ids" attrs="{'readonly': [('state', '=','p')]}" >
                             <tree editable="bottom">
                                 <field name="albaran_id" invisible="1"/>
                                 <field name="product_id"/>
