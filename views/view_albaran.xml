@@ -89,7 +89,7 @@
         
 
         <menuitem id="menu_count_stock"
-                    name="Reporte de perdidas" sequence="100"
+                    name="Ajuste de ingreso y egreso" sequence="100"
                     action="jr_albaran_countact_albaran_count_limit"
                     parent="stock.menu_stock_inventory_control"/>
                     
