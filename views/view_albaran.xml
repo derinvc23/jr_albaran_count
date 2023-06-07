@@ -93,7 +93,77 @@
                     action="jr_albaran_countact_albaran_count_limit"
                     parent="stock.menu_stock_inventory_control"/>
                     
-        
+    
+    <report
+        id="comercial_summary_report1"
+        model="albaran.count"
+        string="Reporte impreso"
+        report_type="qweb-pdf"
+        name="jr_albaran_count.comercial1"
+        file="jr_albaran_count.comercial1"
+      
+    />
+
+    <template id="comercial1">
+        <t t-call="report.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-set="lang" t-value="o.env.user.lang"/>
+                <t t-call="report.internal_layout">
+                    <div class="page">
+                        <h2>
+                            Reporte
+                        </h2>
+                        <div>
+                            Nombre:<span t-field="o.name"/>
+                        </div>
+                        <div>
+                            Fecha:<span t-field="o.date"/>
+                        </div>
+                        <div>
+                            Ubicación:<span t-field="o.location_id"/>
+                        </div>
+                        
+                        <strong>Cuentas conbales si es una entrada</strong>
+                        <div>
+                            Debito:<span t-field="o.account_deb_ent" style="margin-right:50px"/><span>Credito:</span><span t-field="o.account_cred_ent"/>
+                        </div>
+                        <strong>Cuentas conbales si es una salida</strong>
+                        <div>
+                            Debito:<span t-field="o.account_deb_sal" style="margin-right:50px"/><span>Credito:</span><span t-field="o.account_cred_sal"/>
+                        </div>
+                        <br />
+                        <table class="table table-sm">
+                            <tbody>
+                                <tr>
+                                    <th>Producto</th>
+                                    <th>Cantidad Ingresada</th>
+                                    <th>Costo</th>
+                                    <th>Importe total</th>
+                               
+                                </tr>
+                                <tr t-foreach="o.stock_line_ids" t-as="comercial">
+                                    <td>
+                                        <span t-field="comercial.product_id"/>
+                                    </td>
+                                    
+                                    <td>
+                                        <span t-esc="comercial.qty"/>
+                                    </td>
+                                    <td>
+                                        <span t-esc="comercial.costo"/>
+                                    </td>
+                                    <td>
+                                        <span t-esc="comercial.import_t"/>
+                                    </td>
+                                 
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
 
     </data>    
 </openerp>
