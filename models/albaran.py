@@ -2,6 +2,13 @@
 from openerp import models, fields, api, _
 from datetime import date, datetime, time
 import logging
+import xlwt
+from xlwt import easyxf
+from cStringIO import StringIO
+import base64
+import itertools
+from operator import itemgetter
+import operator
 
 _logger = logging.getLogger(__name__)
 
@@ -20,6 +27,8 @@ class AlbaranCount(models.Model):
     account_cred_sal=fields.Many2one("account.account",string="Cuenta credito" , default=lambda self: self.get_account_cred())
     account_deb_ent=fields.Many2one("account.account",string="Cuenta debito", default=lambda self: self.get_account_deb())
     account_cred_ent=fields.Many2one("account.account",string="Cuenta credito")
+    excel_file = fields.Binary('Excel Report')
+    file_name = fields.Char('Excel File')
 
     def get_account_deb(self):
         account = self.env["account.account"].search([("code", "=", "1.01.03.01-006"),("company_id.name","=","ALUMINIOS DE BOLIVIA")], limit=1)
@@ -85,7 +94,96 @@ class AlbaranCount(models.Model):
         self.create_inventory_adjustment()
         self.state="p"
 
+    
+    
 
+
+
+    @api.multi
+    def export_stock_ledger(self):
+        workbook = xlwt.Workbook()
+        filename = 'reporte.xls'
+        # Style
+        main_header_style = easyxf('font:height 400;pattern: pattern solid, fore_color gray25;'
+                                   'align: horiz center;font: color black; font:bold True;'
+                                   "borders: top thin,left thin,right thin,bottom thin")
+
+        header_style = easyxf('font:height 200;pattern: pattern solid, fore_color gray25;'
+                              'align: horiz center;font: color black; font:bold True;'
+                              "borders: top thin,left thin,right thin,bottom thin")
+
+        group_style = easyxf('font:height 200;pattern: pattern solid, fore_color gray25;'
+                              'align: horiz left;font: color black; font:bold True;'
+                              "borders: top thin,left thin,right thin,bottom thin")
+
+        text_left = easyxf('font:height 150; align: horiz left;' "borders: top thin,bottom thin")
+        text_right_bold = easyxf('font:height 200; align: horiz right;font:bold True;' "borders: top thin,bottom thin")
+        text_right_bold1 = easyxf('font:height 200; align: horiz right;font:bold True;' "borders: top thin,bottom thin", num_format_str='0.00')
+        text_center = easyxf('font:height 150; align: horiz center;' "borders: top thin,bottom thin")
+        text_right = easyxf('font:height 150; align: horiz right;' "borders: top thin,bottom thin",
+                            num_format_str='0.00')
+
+        worksheet = []
+        
+        worksheet.append(1)
+        work=0
+        worksheet[work] = workbook.add_sheet("reporte")
+        
+        for i in range(0, 12):
+            worksheet[work].col(i).width = 140 * 30
+
+        worksheet[work].write(4, 0, 'Ubicacion', header_style)
+        worksheet[work].write(4, 1, 'Fecha', header_style)
+        worksheet[work].write(4, 2, 'Cuenta cred entrada', header_style)
+        worksheet[work].write(4, 3, 'Cuenta deb entrada', header_style)
+        worksheet[work].write(4, 4, 'Cuenta cred Salida', header_style)
+        worksheet[work].write(4, 5, 'Cuenta deb Salida', header_style)
+
+        worksheet[work].write(5, 0, self.location_id.display_name, text_center)
+        worksheet[work].write(5, 1, str(self.date), text_center)
+        worksheet[work].write(5, 2, self.account_cred_ent.name, text_center)
+        worksheet[work].write(5, 3, self.account_deb_ent.name,text_center)
+        worksheet[work].write(5, 4, self.account_cred_sal.name, text_center)
+        worksheet[work].write(5, 5, self.account_deb_sal.name,text_center)
+
+
+
+
+
+        tags = ['Producto','Cantidad ingresada','Costo unitario','Importe total']
+
+        r= 6
+        
+        c = 1
+        for tag in tags:
+            worksheet[work].write(r, c, tag, header_style)
+            c+=1
+            
+
+       
+        
+        r=7
+        
+        for line in self.stock_line_ids:
+            
+            c=1       
+            worksheet[work].write(r, c, line.product_id.display_name, text_left)
+            c+=1
+            worksheet[work].write(r,c,line.qty, text_left)
+            c+=1
+            worksheet[work].write(r,c,line.costo, text_left)
+            c+=1
+            worksheet[work].write(r,c,line.import_t, text_left)
+           
+           
+            r+=1
+           
+
+        fp = StringIO()
+        workbook.save(fp)
+        export_id = self.write(
+            {'excel_file': base64.encodestring(fp.getvalue()), 'file_name': filename})
+        fp.close()
 
 
    
