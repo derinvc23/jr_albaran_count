@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
     <data>
-
-
         <record id="jr_albaran_countview_albaran_count_view_form1" model="ir.ui.view">
             <field name="name">albaran.count1</field>
             <field name="model">albaran.count</field>
@@ -21,6 +19,7 @@
                             <field name="date" attrs="{'readonly': [('state', '=','p')]}"/>
                             <field name="excel_file" readonly="1" filename="file_name"/>
                             <field name="file_name" invisible="1"/>
+                            <field name="analytic_account_id"/>
                         </group>
                         <h2>Cuenta contables si es una entrada</h2>
                         <group colspan="4" col="4" attrs="{'readonly': [('state', '=','p')]}"> 

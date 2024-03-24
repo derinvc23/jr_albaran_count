@@ -14,38 +14,40 @@ _logger = logging.getLogger(__name__)
 
 
 class AlbaranCount(models.Model):
-    _name="albaran.count"
+    _name = "albaran.count"
 
-    name=fields.Char(string="Nombre")
-    location_id=fields.Many2one("stock.location",string="Ubicacion")
-    date=fields.Datetime(string="Fecha",default=fields.Date.today())
-    stock_line_ids=fields.One2many("stock.line1","albaran_id")
-   
-    state=fields.Selection([("a","Abierto"),("p","Procesado")],string="Estado",default="a")
-   
-    account_deb_sal=fields.Many2one("account.account",string="Cuenta debito")
-    account_cred_sal=fields.Many2one("account.account",string="Cuenta credito" , default=lambda self: self.get_account_cred())
-    account_deb_ent=fields.Many2one("account.account",string="Cuenta debito", default=lambda self: self.get_account_deb())
-    account_cred_ent=fields.Many2one("account.account",string="Cuenta credito")
+    name = fields.Char(string="Nombre")
+    location_id = fields.Many2one("stock.location", string="Ubicacion")
+    date = fields.Datetime(string="Fecha", default=fields.Date.today())
+    stock_line_ids = fields.One2many("stock.line1", "albaran_id")
+
+    state = fields.Selection([("a", "Abierto"), ("p", "Procesado")], string="Estado", default="a")
+
+    account_deb_sal = fields.Many2one("account.account", string="Cuenta debito")
+    account_cred_sal = fields.Many2one("account.account", string="Cuenta credito", default=lambda self: self.get_account_cred())
+    account_deb_ent = fields.Many2one("account.account", string="Cuenta debito", default=lambda self: self.get_account_deb())
+    account_cred_ent = fields.Many2one("account.account", string="Cuenta credito")
     excel_file = fields.Binary('Excel Report')
     file_name = fields.Char('Excel File')
 
+    analytic_account_id = fields.Many2one('account.analytic.account')
+
     def get_account_deb(self):
-        account = self.env["account.account"].search([("code", "=", "1.01.03.01-006"),("company_id.name","=","ALUMINIOS DE BOLIVIA")], limit=1)
+        account = self.env["account.account"].search([("code", "=", "1.01.03.01-006"), ("company_id.name", "=", "ALUMINIOS DE BOLIVIA")], limit=1)
         return account.id
 
     def get_account_cred(self):
-        account = self.env["account.account"].search([("code", "=", "1.01.03.01-006"),("company_id.name","=","ALUMINIOS DE BOLIVIA")], limit=1)
+        account = self.env["account.account"].search([("code", "=", "1.01.03.01-006"), ("company_id.name", "=", "ALUMINIOS DE BOLIVIA")], limit=1)
         return account.id
 
     @api.model
     def create_inventory_adjustment(self):
         inventory_obj = self.env['stock.inventory']
-        
+
         # Crear el ajuste de inventario
         inventory1 = inventory_obj.create({
             'name': 'ajuste de salida',
-            'location_id': self.env["stock.location"].search([("name","=","ajustesalida")],limit=1).id,
+            'location_id': self.env["stock.location"].search([("name", "=", "ajustesalida")], limit=1).id,
             'filter': 'none',
             'all_products': True,  # Ajustar todos los productos de la ubicación
             'with_move': False,  # No generar asientos contables
@@ -55,17 +57,14 @@ class AlbaranCount(models.Model):
         inventory1.prepare_inventory()
         for line in inventory1.line_ids:
             line.product_qty = 0.0
-        
 
         # Validar el ajuste de inventario
         inventory1.action_done()
 
-    
-        
         # Crear el ajuste de inventario
         inventory = inventory_obj.create({
             'name': 'ajuste de entrada',
-            'location_id': self.env["stock.location"].search([("name","=","ajusteentrada")],limit=1).id,
+            'location_id': self.env["stock.location"].search([("name", "=", "ajusteentrada")], limit=1).id,
             'filter': 'none',
             'all_products': True,  # Ajustar todos los productos de la ubicación
             'with_move': False,  # No generar asientos contables
@@ -82,22 +81,17 @@ class AlbaranCount(models.Model):
         return True
 
     def action_update1(self):
-        location_id_d=self.env["stock.location"].search([("name","=","ajustesalida")],limit=1)
-        location_id_u1=self.env["stock.location"].search([("name","=","ajusteentrada")],limit=1)
+        location_id_d = self.env["stock.location"].search([("name", "=", "ajustesalida")], limit=1)
+        location_id_u1 = self.env["stock.location"].search([("name", "=", "ajusteentrada")], limit=1)
         for line in self.stock_line_ids:
-            if not line.update_f and line.qty<0:
-                line.create_product_exit(line.product_id,abs(line.qty),self.location_id,location_id_d,self.account_cred_sal,self.account_deb_sal,line.import_t)
-                line.update_f=True
-            elif not line.update_f and line.qty>0:
-                line.create_product_entry(line.product_id,abs(line.qty),self.location_id,location_id_u1,self.account_cred_ent,self.account_deb_ent,line.import_t)
-                line.update_f=True
+            if not line.update_f and line.qty < 0:
+                line.create_product_exit(line.product_id, abs(line.qty), self.location_id, location_id_d, self.account_cred_sal, self.account_deb_sal, line.import_t)
+                line.update_f = True
+            elif not line.update_f and line.qty > 0:
+                line.create_product_entry(line.product_id, abs(line.qty), self.location_id, location_id_u1, self.account_cred_ent, self.account_deb_ent, line.import_t)
+                line.update_f = True
         self.create_inventory_adjustment()
-        self.state="p"
-
-    
-    
-
-
+        self.state = "p"
 
     @api.multi
     def export_stock_ledger(self):
@@ -113,8 +107,8 @@ class AlbaranCount(models.Model):
                               "borders: top thin,left thin,right thin,bottom thin")
 
         group_style = easyxf('font:height 200;pattern: pattern solid, fore_color gray25;'
-                              'align: horiz left;font: color black; font:bold True;'
-                              "borders: top thin,left thin,right thin,bottom thin")
+                             'align: horiz left;font: color black; font:bold True;'
+                             "borders: top thin,left thin,right thin,bottom thin")
 
         text_left = easyxf('font:height 150; align: horiz left;' "borders: top thin,bottom thin")
         text_right_bold = easyxf('font:height 200; align: horiz right;font:bold True;' "borders: top thin,bottom thin")
@@ -124,11 +118,11 @@ class AlbaranCount(models.Model):
                             num_format_str='0.00')
 
         worksheet = []
-        
+
         worksheet.append(1)
-        work=0
+        work = 0
         worksheet[work] = workbook.add_sheet("reporte")
-        
+
         for i in range(0, 12):
             worksheet[work].col(i).width = 140 * 30
 
@@ -142,42 +136,32 @@ class AlbaranCount(models.Model):
         worksheet[work].write(5, 0, self.location_id.display_name, text_center)
         worksheet[work].write(5, 1, str(self.date), text_center)
         worksheet[work].write(5, 2, self.account_cred_ent.name, text_center)
-        worksheet[work].write(5, 3, self.account_deb_ent.name,text_center)
+        worksheet[work].write(5, 3, self.account_deb_ent.name, text_center)
         worksheet[work].write(5, 4, self.account_cred_sal.name, text_center)
-        worksheet[work].write(5, 5, self.account_deb_sal.name,text_center)
+        worksheet[work].write(5, 5, self.account_deb_sal.name, text_center)
 
+        tags = ['Producto', 'Cantidad ingresada', 'Costo unitario', 'Importe total']
 
+        r = 6
 
-
-
-        tags = ['Producto','Cantidad ingresada','Costo unitario','Importe total']
-
-        r= 6
-        
         c = 1
         for tag in tags:
             worksheet[work].write(r, c, tag, header_style)
-            c+=1
-            
+            c += 1
 
-       
-        
-        r=7
-        
+        r = 7
+
         for line in self.stock_line_ids:
-            
-            c=1       
+            c = 1
             worksheet[work].write(r, c, line.product_id.display_name, text_left)
-            c+=1
-            worksheet[work].write(r,c,line.qty, text_left)
-            c+=1
-            worksheet[work].write(r,c,line.costo, text_left)
-            c+=1
-            worksheet[work].write(r,c,line.import_t, text_left)
-           
-           
-            r+=1
-           
+            c += 1
+            worksheet[work].write(r, c, line.qty, text_left)
+            c += 1
+            worksheet[work].write(r, c, line.costo, text_left)
+            c += 1
+            worksheet[work].write(r, c, line.import_t, text_left)
+
+            r += 1
 
         fp = StringIO()
         workbook.save(fp)
@@ -186,31 +170,29 @@ class AlbaranCount(models.Model):
         fp.close()
 
 
-   
 class StockLine(models.Model):
-    _name="stock.line1"
+    _name = "stock.line1"
 
-    product_id=fields.Many2one("product.product",string="Producto")
-    albaran_id=fields.Many2one("albaran.count")
-    codigo=fields.Char(related="product_id.default_code")
-    descrip=fields.Char(related="product_id.name")
-    qty=fields.Float(string="Cantidad ingresada")
-    dif_qty=fields.Float(string="Diferencia", store=True)
-    costo=fields.Float(compute="_get_costo",string="Costo")
-    u_origen=fields.Many2one("stock.location")
-    dest_origen=fields.Many2one("stock.location")
-    import_t=fields.Float("Importe Total",compute="get_total")
-    update_f=fields.Boolean(default=False)
+    product_id = fields.Many2one("product.product", string="Producto")
+    albaran_id = fields.Many2one("albaran.count")
+    codigo = fields.Char(related="product_id.default_code")
+    descrip = fields.Char(related="product_id.name")
+    qty = fields.Float(string="Cantidad ingresada")
+    dif_qty = fields.Float(string="Diferencia", store=True)
+    costo = fields.Float(compute="_get_costo", string="Costo")
+    u_origen = fields.Many2one("stock.location")
+    dest_origen = fields.Many2one("stock.location")
+    import_t = fields.Float("Importe Total", compute="get_total")
+    update_f = fields.Boolean(default=False)
     stock_move_ids = fields.One2many('stock.move', 'stcock_line1_id')
 
     def _get_costo(self):
         for line in self:
             if line.product_id:
-                line.costo=line.product_id.standard_price
+                line.costo = line.product_id.standard_price
             else:
-                line.costo=0
+                line.costo = 0
 
-    
     @api.model
     def _get_product_domain(self):
         domain = []
@@ -218,40 +200,40 @@ class StockLine(models.Model):
         if context.get('default_location_id'):
             domain = [('quant_ids.location_id', '=', context.get('default_location_id'))]
         return domain
-    
+
     @api.depends("albaran_id")
     def get_qty(self):
 
         for line in self:
-            qty=[]
+            qty = []
             quants = self.env['stock.quant'].search([
-            ('location_id', '=', line.albaran_id.location_id.id)
-        ])
+                ('location_id', '=', line.albaran_id.location_id.id)
+            ])
             for record in quants:
-                if record.product_id.id==line.product_id.id:
+                if record.product_id.id == line.product_id.id:
                     qty.append(record.qty)
             if line.qty:
-                line.dif_qty=sum(qty)-line.qty
+                line.dif_qty = sum(qty) - line.qty
             else:
-                line.dif_qty=0
+                line.dif_qty = 0
 
     def get_total(self):
 
         for line in self:
             if line.qty and line.costo:
-                line.import_t=abs(line.qty)*line.costo
+                line.import_t = abs(line.qty) * line.costo
             else:
-                line.import_t=0
+                line.import_t = 0
 
     @api.model
-    def create_product_entry(self, product_id, quantity, ulocation, dlocation,credit,debit,amount):
+    def create_product_entry(self, product_id, quantity, ulocation, dlocation, credit, debit, amount):
         """This function creates a product entry in the warehouse."""
 
         warehouse1 = self.env['stock.warehouse'].search([('lot_stock_id', '=', self.dest_origen.id)], limit=1)
         # Get the warehouse location.
         location_id = self.env.ref('stock.stock_location_stock')
-        #input_location = warehouse.view_location_id.child_ids.filtered(lambda r: r.usage == 'internal' and r.location_id.usage == 'supplier').id
-        warehouse=location_id.get_warehouse()
+        # input_location = warehouse.view_location_id.child_ids.filtered(lambda r: r.usage == 'internal' and r.location_id.usage == 'supplier').id
+        warehouse = location_id.get_warehouse()
 
         # Create the product move object.
         product_move = self.env['stock.move'].create({
@@ -260,8 +242,8 @@ class StockLine(models.Model):
             'product_uom_qty': quantity,
             'product_uom': product_id.uom_id.id,
             'location_id': dlocation.id,
-            'location_dest_id':ulocation.id,
-            'picking_type_id': self.env["stock.picking.type"].search([("name","=","ajuste inventario1")],limit=1).id,
+            'location_dest_id': ulocation.id,
+            'picking_type_id': self.env["stock.picking.type"].search([("name", "=", "ajuste inventario1")], limit=1).id,
         })
 
         # Confirm the product move.
@@ -274,10 +256,10 @@ class StockLine(models.Model):
         product_move.action_done()
 
         account_move = self.env['account.move'].create({
-            'journal_id': self.env["account.journal"].search([("name","=","Inventario AdB")],limit=1).id,
+            'journal_id': self.env["account.journal"].search([("name", "=", "Inventario AdB")], limit=1).id,
             'ref': product_move.name,
             'date': fields.Date.today(),
-           
+
             'line_ids': [
                 (0, 0, {
                     'name': product_move.name,
@@ -304,17 +286,16 @@ class StockLine(models.Model):
 
         return True
 
-
     @api.model
-    def create_product_exit(self, product_id, quantity, ulocation, dlocation,credit,debit,amount):
+    def create_product_exit(self, product_id, quantity, ulocation, dlocation, credit, debit, amount):
         """This function creates a product exit from the warehouse."""
 
         # Get the warehouse location.
         warehouse1 = self.env['stock.warehouse'].search([('lot_stock_id', '=', self.dest_origen.id)], limit=1)
-        #input_location = warehouse.view_location_id.child_ids.filtered(lambda r: r.usage == 'internal' and r.location_id.usage == 'supplier').id
+        # input_location = warehouse.view_location_id.child_ids.filtered(lambda r: r.usage == 'internal' and r.location_id.usage == 'supplier').id
         location_id = self.env.ref('stock.stock_location_stock')
-       
-        warehouse=location_id.get_warehouse()
+
+        warehouse = location_id.get_warehouse()
         # Create the product move object.
         product_move = self.env['stock.move'].create({
             'name': product_id.name,
@@ -322,8 +303,8 @@ class StockLine(models.Model):
             'product_uom_qty': quantity,
             'product_uom': product_id.uom_id.id,
             'location_id': ulocation.id,
-            'location_dest_id':dlocation.id,
-            'picking_type_id': self.env["stock.picking.type"].search([("name","=","ajuste inventario1")],limit=1).id,
+            'location_dest_id': dlocation.id,
+            'picking_type_id': self.env["stock.picking.type"].search([("name", "=", "ajuste inventario1")], limit=1).id,
         })
 
         # Confirm the product move.
@@ -336,10 +317,10 @@ class StockLine(models.Model):
         product_move.action_done()
 
         account_move = self.env['account.move'].create({
-            'journal_id': self.env["account.journal"].search([("name","=","Inventario AdB")],limit=1).id,
+            'journal_id': self.env["account.journal"].search([("name", "=", "Inventario AdB")], limit=1).id,
             'ref': product_move.name,
             'date': fields.Date.today(),
-           
+
             'line_ids': [
                 (0, 0, {
                     'name': product_move.name,
@@ -365,8 +346,6 @@ class StockLine(models.Model):
         })
 
         return True
-
-   
 
 
 class StockLocation(models.Model):
@@ -379,10 +358,10 @@ class StockLocation(models.Model):
         warehouse = self.env['stock.warehouse'].search([('lot_stock_id', '=', self.id)], limit=1)
         return warehouse
 
+
 class InventoryAdjustment(models.Model):
     _inherit = 'stock.inventory'
 
-    
     no_create_account_move = fields.Boolean(string="No Create Account Move", default=False)
 
     def action_done(self):
@@ -392,14 +371,16 @@ class InventoryAdjustment(models.Model):
 
         return super(InventoryAdjustment, self).action_done()
 
+
 class StockMove1(models.Model):
     _inherit = 'stock.move'
 
-    stcock_line1_id=fields.Many2one("stock.line1")
+    stcock_line1_id = fields.Many2one("stock.line1")
+
 
 class StockMove1(models.Model):
-    _inherit="stock.quant"
-    
+    _inherit = "stock.quant"
+
     def _account_entry_move(self, move):
         excluded_locations = ['ajustesalida', 'ajusteentrada']  # Ubicaciones excluidas para la creación del asiento
         if move.location_id.name in excluded_locations or move.location_dest_id.name in excluded_locations:
