@@ -19,7 +19,7 @@
                             <field name="date" attrs="{'readonly': [('state', '=','p')]}"/>
                             <field name="excel_file" readonly="1" filename="file_name"/>
                             <field name="file_name" invisible="1"/>
-                            <field name="analytic_account_id"/>
+                            <field name="analytic_account_id" string="Cuenta Analítica"/>
                         </group>
                         <h2>Cuenta contables si es una entrada</h2>
                         <group colspan="4" col="4" attrs="{'readonly': [('state', '=','p')]}"> 
